@@ -1,4 +1,4 @@
-# dom-element-to-component-source
+# DOM Element to Component Source
 
 [![npm version](https://img.shields.io/npm/v/dom-element-to-component-source.svg?style=flat)](https://www.npmjs.com/package/dom-element-to-component-source) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/itayadler/dom-element-to-component-source/blob/main/LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/itayadler/dom-element-to-component-source/pulls)
 
@@ -43,79 +43,6 @@ if (result.success) {
 }
 ```
 
-## Usage Examples
-
-### Basic Usage
-
-```typescript
-import { getElementSourceLocation, getElementSourceLocationSync } from 'dom-element-to-component-source'
-
-// Async version with source map resolution
-const result = await getElementSourceLocation(element, {
-  resolveSourceMaps: true,
-  includeSourceCode: false
-})
-
-// Sync version (faster, no source map resolution)
-const result = getElementSourceLocationSync(element)
-```
-
-### React Event Handler
-
-```typescript
-import { getElementSourceLocation } from 'dom-element-to-component-source'
-
-function MyComponent() {
-  const handleClick = (event: React.MouseEvent) => {
-    getElementSourceLocation(event.currentTarget).then(result => {
-      if (result.success) {
-        console.log('Source location:', result.data)
-        // { file: '/src/MyComponent.tsx', line: 15, column: 8, componentName: 'MyComponent' }
-      }
-    })
-  }
-
-  return <button onClick={handleClick}>Click me</button>
-}
-```
-
-### Next.js with Turbopack
-
-```typescript
-// In your Next.js app with Turbopack
-import { getElementSourceLocation } from 'dom-element-to-component-source'
-
-export default function MyPage() {
-  const handleClick = (event: React.MouseEvent) => {
-    const result = await getElementSourceLocation(event.currentTarget)
-    if (result.success) {
-      console.log('Source location:', result.data)
-    }
-  }
-
-  return <button onClick={handleClick}>Click me</button>
-}
-```
-
-### React 19
-
-```typescript
-// In your React 19 app
-import { getElementSourceLocation } from 'dom-element-to-component-source'
-
-function MyComponent() {
-  const handleClick = (event: React.MouseEvent) => {
-    const result = await getElementSourceLocation(event.currentTarget)
-    if (result.success) {
-      console.log(`Component: ${result.data.componentName}`)
-      console.log(`File: ${result.data.file}:${result.data.line}:${result.data.column}`)
-    }
-  }
-
-  return <button onClick={handleClick}>Click me</button>
-}
-```
-
 ## API Reference
 
 ### `getElementSourceLocation(element, options?)`
@@ -131,21 +58,9 @@ Retrieves the source location of a DOM element in React applications.
 **Example:**
 ```typescript
 const result = await getElementSourceLocation(button, {
-  resolveSourceMaps: true,
-  includeSourceCode: true,
   maxDepth: 10
 })
 ```
-
-### `getElementSourceLocationSync(element, options?)`
-
-Synchronous version that skips source map resolution for better performance.
-
-**Parameters:**
-- `element: Element` - The DOM element to analyze
-- `options?: Omit<SourceLocationOptions, 'resolveSourceMaps' | 'sourceMapConsumer'>` - Configuration options
-
-**Returns:** `SourceLocationResult`
 
 ### Types
 
@@ -155,13 +70,9 @@ interface SourceLocation {
   line: number
   column: number
   componentName?: string
-  sourceCode?: string
 }
 
 interface SourceLocationOptions {
-  includeSourceCode?: boolean
-  resolveSourceMaps?: boolean
-  sourceMapConsumer?: SourceMapConsumer
   maxDepth?: number
 }
 
@@ -174,14 +85,6 @@ type SourceLocationResult =
 
 - **React 16+** - Required for Fiber node access
 - **Development Mode** - Only works in development mode
-- **Debug Source Maps** - Requires React debug information to be enabled
-
-## Browser Support
-
-- Chrome 60+
-- Firefox 55+
-- Safari 12+
-- Edge 79+
 
 ## Troubleshooting
 

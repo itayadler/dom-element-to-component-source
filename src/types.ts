@@ -82,12 +82,6 @@ export interface SourceMapConsumer {
  * Configuration options for source location extraction
  */
 export interface SourceLocationOptions {
-  /** Whether to include source code in the result */
-  includeSourceCode?: boolean
-  /** Whether to resolve source maps */
-  resolveSourceMaps?: boolean
-  /** Custom source map consumer */
-  sourceMapConsumer?: SourceMapConsumer
   /** Maximum depth to traverse up the fiber tree */
   maxDepth?: number
 }
