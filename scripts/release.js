@@ -45,17 +45,6 @@ function updateVersion(newVersion) {
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
 }
 
-function updateChangelog(version, releaseType) {
-  const changelogPath = 'CHANGELOG.md';
-  const changelog = fs.readFileSync(changelogPath, 'utf8');
-  
-  const today = new Date().toISOString().split('T')[0];
-  const newEntry = `## [${version}] - ${today}\n\n### ${releaseType === 'major' ? 'Breaking Changes' : releaseType === 'minor' ? 'Added' : 'Fixed'}\n- \n\n`;
-  
-  const updatedChangelog = changelog.replace('# Changelog', `# Changelog\n\n${newEntry}`);
-  fs.writeFileSync(changelogPath, updatedChangelog);
-}
-
 function validateWorkingDirectory() {
   // Check if we're in a git repository
   try {
@@ -92,7 +81,7 @@ function buildPackage() {
 
 function commitChanges(version) {
   log('Committing changes...', 'blue');
-  exec(`git add package.json CHANGELOG.md`);
+  exec(`git add package.json`);
   exec(`git commit -m "chore: release v${version}"`);
   log('Changes committed!', 'green');
 }
@@ -184,9 +173,8 @@ function performRelease(newVersion, releaseType) {
     log('Updating version...', 'blue');
     updateVersion(newVersion);
 
-    // Update changelog
-    log('Updating changelog...', 'blue');
-    updateChangelog(newVersion, releaseType);
+    // Skip changelog update - handled manually
+    log('Skipping changelog update (handled manually)...', 'yellow');
 
     // Build package
     buildPackage();
