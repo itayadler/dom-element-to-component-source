@@ -1,0 +1,79 @@
+{
+  "name": "dom-element-to-component-source",
+  "version": "0.0.9",
+  "description": "A library to retrieve the source location of DOM elements in React applications",
+  "main": "./dist/dom-element-to-component-source.cjs.js",
+  "module": "./dist/dom-element-to-component-source.es.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/dom-element-to-component-source.es.js",
+      "require": "./dist/dom-element-to-component-source.cjs.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "vite build && tsc --emitDeclarationOnly --outDir dist",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "type-check": "tsc --noEmit",
+    "dev": "vite",
+    "prepublishOnly": "yarn build",
+    "release": "node scripts/release.js",
+    "release:patch": "node scripts/release.js patch",
+    "release:minor": "node scripts/release.js minor",
+    "release:major": "node scripts/release.js major",
+    "publish:npm": "npm publish",
+    "test:release-env": "node scripts/test-release-env.js"
+  },
+  "keywords": [
+    "react",
+    "dom",
+    "source-map",
+    "debugging",
+    "development",
+    "turbopack",
+    "nextjs"
+  ],
+  "author": "Itay Adler",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/itayadler/dom-element-to-component-source.git"
+  },
+  "bugs": {
+    "url": "https://github.com/itayadler/dom-element-to-component-source/issues"
+  },
+  "homepage": "https://github.com/itayadler/dom-element-to-component-source#readme",
+  "packageManager": "yarn@4.10.3",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "sideEffects": false,
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^24.8.1",
+    "@vitejs/plugin-react": "^5.0.4",
+    "@vitest/browser": "^3.2.4",
+    "concurrently": "^9.2.1",
+    "http-server": "^14.1.1",
+    "jsdom": "^27.0.1",
+    "playwright": "^1.56.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.10",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "error-stack-parser": "^2.1.4",
+    "source-map": "^0.7.6",
+    "stacktrace-gps": "^3.1.2"
+  }
+}
