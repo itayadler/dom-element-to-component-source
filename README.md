@@ -7,7 +7,7 @@ A TypeScript library for retrieving the source location of DOM elements in React
 ## Features
 
 - **🔍 Source Location Detection** - Get the source location of any DOM element in React
-- **⚛️ React Framework Support** - Works with React 16+ including React 19
+- **⚛️ React Framework Support** - Works with React 16+ including NextJS
 - **🗺️ Source Map Support** - Resolves original source locations using source maps
 
 ## Installation

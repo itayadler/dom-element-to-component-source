@@ -34,6 +34,8 @@
   "keywords": [
     "react",
     "dom",
+    "stacktrace",
+    "react-component-source-code",
     "source-map",
     "debugging",
     "development",
@@ -73,7 +75,6 @@
   },
   "dependencies": {
     "error-stack-parser": "^2.1.4",
-    "source-map": "^0.7.6",
     "stacktrace-gps": "^3.1.2"
   }
 }
