@@ -1,6 +1,0 @@
-{
-    "name": "@itayadler/dom-element-to-component-source",
-    "version": "0.1.0",
-    "license": "MIT",
-    "exports": "./dist/index.js"
-  }
