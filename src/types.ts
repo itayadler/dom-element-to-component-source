@@ -22,6 +22,7 @@ export interface SourceLocation {
 export interface ReactFiberNode {
   /** Debug stack information (React 16+) - Error object with stack property */
   _debugStack?: Error
+  name: string
   /** Component type information */
   type?: {
     name?: string

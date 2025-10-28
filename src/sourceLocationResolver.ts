@@ -26,9 +26,7 @@ export async function parseDebugStack(
   }
 
   let componentName: string | undefined
-  if (fiberNode.type) {
-    componentName = fiberNode._debugOwner?.type?.name
-  }
+  componentName = fiberNode._debugOwner?.name || fiberNode._debugOwner?.type?.name
 
   let sourceLocation: SourceLocation
 
