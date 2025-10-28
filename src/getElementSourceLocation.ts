@@ -108,7 +108,8 @@ export async function getElementSourceLocation(
   options: SourceLocationOptions = {}
 ): Promise<SourceLocationResult> {
   try {
-    if (!element || !(element instanceof Element)) {
+    const elementInstance = element.ownerDocument.defaultView?.Element || Element
+    if (!element || !(element instanceof elementInstance)) {
       return {
         success: false,
         error: 'Invalid element provided'
