@@ -2,6 +2,28 @@ import { SourceLocation, ReactFiberNode } from './types'
 import ErrorStackParser from 'error-stack-parser'
 import StackTraceGPS from 'stacktrace-gps'
 
+function getComponentName(fiberNode: ReactFiberNode): string | null {
+  let current = fiberNode._debugOwner
+  let previous: ReactFiberNode | null = null
+  
+  while (current) {
+    if (current === previous) {
+      break
+    }
+    
+    const name = current.name || current.type?.name
+    
+    if (name) {
+      return name
+    }
+    
+    previous = current
+    current = current._debugOwner
+  }
+  
+  return null
+}
+
 /**
  * Parses debug stack data from different React versions and formats
  * @param fiberNode - The React Fiber node
@@ -25,8 +47,7 @@ export async function parseDebugStack(
     return null
   }
 
-  let componentName: string | undefined
-  componentName = fiberNode._debugOwner?.name || fiberNode._debugOwner?.type?.name
+  let componentName: string | undefined = getComponentName(fiberNode) || undefined
 
   let sourceLocation: SourceLocation
 
