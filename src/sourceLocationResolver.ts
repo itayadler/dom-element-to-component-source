@@ -56,16 +56,113 @@ export async function parseDebugStack(
       const stackFrames = ErrorStackParser.parse(debugStack as Error)
       
       if (stackFrames.length >= 2) {
+        const firstFrame = stackFrames[0]
         const targetFrame = stackFrames[1]
         
-        const gps = new StackTraceGPS()
-        const originalFrame = await gps.getMappedLocation(targetFrame)
-        
-        sourceLocation = {
-          file: originalFrame.fileName || targetFrame.fileName || '',
-          line: originalFrame.lineNumber || targetFrame.lineNumber || 0,
-          column: originalFrame.columnNumber || targetFrame.columnNumber || 0,
-          componentName
+        // Check if first frame contains _next/static (Next.js client bundle)
+        if (firstFrame.fileName && firstFrame.fileName.includes('_next/static')) {
+          // Extract the base URL from the first frame
+          const url = new URL(firstFrame.fileName)
+          const baseUrl = `${url.protocol}//${url.host}`
+          
+          // Check if second frame has the problematic about://React/Server URL
+          if (targetFrame.fileName && targetFrame.fileName.startsWith('about://')) {
+            // Extract the file path from the about:// URL
+            // Format: about://React/Server/file:///Users/...
+            const fileUrlMatch = targetFrame.fileName.match(/file:\/\/\/(.+?)(?:\?|$)/)
+            
+            if (fileUrlMatch) {
+              let localPath = decodeURIComponent(fileUrlMatch[1])
+              
+              // Check if this is a Next.js server chunk (.next/server/chunks)
+              if (localPath.includes('.next/server/chunks')) {
+                // Extract the chunk file name from the server path
+                // Path format: .../.next/server/chunks/ssr/chunkname.js
+                const chunkMatch = localPath.match(/\.next\/server\/chunks\/(?:ssr\/)?([^/]+)$/)
+                if (chunkMatch) {
+                  const chunkName = chunkMatch[1]
+                  // Construct a URL that points to the server chunk
+                  // For Next.js, server chunks can be accessed at /_next/static/chunks/
+                  const mappedUrl = `${baseUrl}/_next/static/chunks/${chunkName}`
+                  
+                  sourceLocation = {
+                    file: mappedUrl,
+                    line: targetFrame.lineNumber || 0,
+                    column: targetFrame.columnNumber || 0,
+                    componentName
+                  }
+                } else {
+                  // Can't extract chunk name, return local path as fallback
+                  sourceLocation = {
+                    file: localPath,
+                    line: targetFrame.lineNumber || 0,
+                    column: targetFrame.columnNumber || 0,
+                    componentName
+                  }
+                }
+              } else {
+                // Try to construct a Next.js app route from the path
+                // For Next.js App Router, files in app/ directory become routes
+                const appMatch = localPath.match(/app\/(.+)$/)
+                if (appMatch) {
+                  let appRoute = appMatch[1].replace(/\.\w+$/, '') // Remove extension
+                  // Replace index routes with empty string
+                  appRoute = appRoute.replace(/\/index$/, '')
+                  
+                  // Try to add /_next/static route prefix for client-side source maps
+                  const mappedUrl = `${baseUrl}/_next/static/chunks/${appRoute}`
+                  
+                  sourceLocation = {
+                    file: mappedUrl,
+                    line: targetFrame.lineNumber || 0,
+                    column: targetFrame.columnNumber || 0,
+                    componentName
+                  }
+                } else {
+                  // Can't parse as app route, use local path
+                  sourceLocation = {
+                    file: localPath,
+                    line: targetFrame.lineNumber || 0,
+                    column: targetFrame.columnNumber || 0,
+                    componentName
+                  }
+                }
+              }
+            } else {
+              // Can't parse the URL, use original logic
+              const gps = new StackTraceGPS()
+              const originalFrame = await gps.getMappedLocation(targetFrame)
+              
+              sourceLocation = {
+                file: originalFrame.fileName || targetFrame.fileName || '',
+                line: originalFrame.lineNumber || targetFrame.lineNumber || 0,
+                column: originalFrame.columnNumber || targetFrame.columnNumber || 0,
+                componentName
+              }
+            }
+          } else {
+            // Not an about:// URL, use original logic
+            const gps = new StackTraceGPS()
+            const originalFrame = await gps.getMappedLocation(targetFrame)
+            
+            sourceLocation = {
+              file: originalFrame.fileName || targetFrame.fileName || '',
+              line: originalFrame.lineNumber || targetFrame.lineNumber || 0,
+              column: originalFrame.columnNumber || targetFrame.columnNumber || 0,
+              componentName
+            }
+          }
+        } else {
+          // First frame doesn't have _next/static, use original logic
+          const gps = new StackTraceGPS()
+          const originalFrame = await gps.getMappedLocation(targetFrame)
+          
+          sourceLocation = {
+            file: originalFrame.fileName || targetFrame.fileName || '',
+            line: originalFrame.lineNumber || targetFrame.lineNumber || 0,
+            column: originalFrame.columnNumber || targetFrame.columnNumber || 0,
+            componentName
+          }
         }
       } else {
         return null
