@@ -12,21 +12,16 @@ export default defineConfig({
       formats: ['es', 'cjs', 'umd']
     },
     rollupOptions: {
+      external: (id) => {
+        // Externalize Node.js built-in modules
+        return id.startsWith('node:') || ['fs', 'path', 'node:fs', 'node:path'].includes(id)
+      },
       output: [
         {
           format: 'es',
           entryFileNames: 'dom-element-to-component-source.es.js',
+          globals: {}
         },
-        {
-          format: 'cjs',
-          entryFileNames: 'dom-element-to-component-source.cjs.js',
-          exports: 'named'
-        },
-        {
-          format: 'umd',
-          entryFileNames: 'dom-element-to-component-source.umd.js',
-          name: 'DomElementToComponentSource',
-        }
       ]
     },
     sourcemap: true
