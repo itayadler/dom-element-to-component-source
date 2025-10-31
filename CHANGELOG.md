@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.0]
 
 ### Added
 - `resolveSourceLocationInServer` function to resolve source locations from React Server Components
