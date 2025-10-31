@@ -1436,6 +1436,7 @@ __metadata:
     http-server: "npm:^14.1.1"
     jsdom: "npm:^27.0.1"
     playwright: "npm:^1.56.1"
+    source-map: "npm:^0.7.4"
     stacktrace-gps: "npm:^3.1.2"
     typescript: "npm:^5.9.3"
     vite: "npm:^7.1.10"
@@ -2854,6 +2855,13 @@ __metadata:
   version: 0.5.6
   resolution: "source-map@npm:0.5.6"
   checksum: 10c0/beb2c5974bb58954d75e86249953d47ae16f7df1a8531abb9fcae0cd262d9fa09c2db3a134e20e99358b1adba42b6b054a32c8e16b571b3efcf6af644c329f0d
+  languageName: node
+  linkType: hard
+
+"source-map@npm:^0.7.4":
+  version: 0.7.6
+  resolution: "source-map@npm:0.7.6"
+  checksum: 10c0/59f6f05538539b274ba771d2e9e32f6c65451982510564438e048bc1352f019c6efcdc6dd07909b1968144941c14015c2c7d4369fb7c4d7d53ae769716dcc16c
   languageName: node
   linkType: hard
 

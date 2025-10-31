@@ -9,6 +9,7 @@ A TypeScript library for retrieving the source location of DOM elements in React
 - **🔍 Source Location Detection** - Get the source location of any DOM element in React
 - **⚛️ React Framework Support** - Works with React 16+ including NextJS
 - **🗺️ Source Map Support** - Resolves original source locations using source maps
+- **🖥️ Server-Side Source Resolution** - Resolves source locations from React Server Components using source maps
 
 ## Installation
 
@@ -26,6 +27,8 @@ pnpm add dom-element-to-component-source
 
 ## Quick Start
 
+### Client-Side Usage
+
 ```typescript
 import { getElementSourceLocation } from 'dom-element-to-component-source'
 
@@ -41,6 +44,23 @@ if (result.success) {
 } else {
   console.error('Error:', result.error)
 }
+```
+
+### Server-Side Usage (React Server Components)
+
+```typescript
+import { resolveSourceLocationInServer } from 'dom-element-to-component-source'
+
+// Resolve source location from React Server Components
+const serverLocation = {
+  file: 'about://React/Server/file:///path/to/.next/server/chunks/ssr/file.js',
+  line: 251,
+  column: 300
+}
+
+const resolved = await resolveSourceLocationInServer(serverLocation)
+// resolved.file will point to the original source file (e.g., src/app/components/Intro.tsx)
+console.log(`Original source: ${resolved.file}:${resolved.line}:${resolved.column}`)
 ```
 
 ## API Reference
@@ -61,6 +81,31 @@ const result = await getElementSourceLocation(button, {
   maxDepth: 10
 })
 ```
+
+### `resolveSourceLocationInServer(sourceLocation)`
+
+Resolves a source location that starts with `about://React/Server` by using source maps to map from server chunk files to original source files. This is particularly useful for debugging React Server Components in Next.js applications.
+
+**Parameters:**
+- `sourceLocation: SourceLocation` - The source location with a file path starting with `about://React/Server`
+
+**Returns:** `Promise<SourceLocation>` - The resolved source location pointing to the original source file
+
+**Example:**
+```typescript
+const serverLocation = {
+  file: 'about://React/Server/file:///path/to/.next/server/chunks/ssr/[root-of-the-server]__abc123._.js',
+  line: 251,
+  column: 300
+}
+
+const resolved = await resolveSourceLocationInServer(serverLocation)
+// resolved.file: /path/to/src/app/components/Intro.tsx
+// resolved.line: 6
+// resolved.column: 7
+```
+
+**Note:** This function only processes source locations where `sourceLocation.file` begins with `about://React/Server/`. If the file path doesn't match this pattern, the original source location is returned unchanged.
 
 ### Types
 
