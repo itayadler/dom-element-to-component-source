@@ -61,8 +61,12 @@ export async function parseDebugStack(
         const gps = new StackTraceGPS()
         const originalFrame = await gps.getMappedLocation(targetFrame)
         
+        const rawFileName = originalFrame.fileName || targetFrame.fileName || ''
+        // Remove query parameters (e.g., ?35) from the file path
+        const cleanedFileName = rawFileName.split('?')[0]
+        
         sourceLocation = {
-          file: originalFrame.fileName || targetFrame.fileName || '',
+          file: cleanedFileName,
           line: originalFrame.lineNumber || targetFrame.lineNumber || 0,
           column: originalFrame.columnNumber || targetFrame.columnNumber || 0,
           componentName
@@ -75,8 +79,12 @@ export async function parseDebugStack(
         const stackFrames = ErrorStackParser.parse(debugStack as Error)
         if (stackFrames.length >= 2) {
           const targetFrame = stackFrames[1]
+          const rawFileName = targetFrame.fileName || ''
+          // Remove query parameters (e.g., ?35) from the file path
+          const cleanedFileName = rawFileName.split('?')[0]
+          
           sourceLocation = {
-            file: targetFrame.fileName || '',
+            file: cleanedFileName,
             line: targetFrame.lineNumber || 0,
             column: targetFrame.columnNumber || 0,
             componentName
@@ -89,8 +97,12 @@ export async function parseDebugStack(
       }
     }
   } else if (debugStack && 'fileName' in debugStack) {
+    const rawFileName = debugStack.fileName || ''
+    // Remove query parameters (e.g., ?35) from the file path
+    const cleanedFileName = rawFileName.split('?')[0]
+    
     sourceLocation = {
-      file: debugStack.fileName || '',
+      file: cleanedFileName,
       line: debugStack.lineNumber || 0,
       column: debugStack.columnNumber || 0,
       componentName
