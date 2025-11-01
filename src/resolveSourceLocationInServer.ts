@@ -2,6 +2,75 @@ import { SourceLocation } from './types'
 import { SourceMapConsumer } from 'source-map'
 import { readFileSync, existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+import { createRequire } from 'node:module'
+
+let sourceMapInitialized = false
+
+/**
+ * Initializes SourceMapConsumer with the WASM file.
+ * This must be called before using SourceMapConsumer.
+ */
+function ensureSourceMapInitialized(): void {
+  if (sourceMapInitialized) {
+    return
+  }
+
+  try {
+    let wasmPath: string | null = null
+    
+    try {
+      const require = createRequire(import.meta.url)
+      const sourceMapPath = require.resolve('source-map/package.json')
+      wasmPath = join(dirname(sourceMapPath), 'lib', 'mappings.wasm')
+    } catch {
+      try {
+        const possiblePaths = [
+          join(process.cwd(), 'node_modules', 'source-map', 'lib', 'mappings.wasm'),
+          join(process.cwd(), '..', 'node_modules', 'source-map', 'lib', 'mappings.wasm'),
+          join(process.cwd(), '..', '..', 'node_modules', 'source-map', 'lib', 'mappings.wasm'),
+        ]
+        
+        for (const path of possiblePaths) {
+          if (existsSync(path)) {
+            wasmPath = path
+            break
+          }
+        }
+        
+        if (!wasmPath) {
+          wasmPath = possiblePaths[0]
+        }
+      } catch {
+        wasmPath = join(process.cwd(), 'node_modules', 'source-map', 'lib', 'mappings.wasm')
+      }
+    }
+
+    if (wasmPath && existsSync(wasmPath)) {
+      const wasmBuffer = readFileSync(wasmPath)
+      const wasmArrayBuffer = wasmBuffer.buffer.slice(
+        wasmBuffer.byteOffset,
+        wasmBuffer.byteOffset + wasmBuffer.byteLength
+      )
+      
+      // Type assertion needed because TypeScript definitions are incomplete
+      ;(SourceMapConsumer as any).initialize({
+        'lib/mappings.wasm': wasmArrayBuffer
+      })
+      sourceMapInitialized = true
+    } else if (wasmPath) {
+      // Fallback to path string for environments where file can't be read directly
+      ;(SourceMapConsumer as any).initialize({
+        'lib/mappings.wasm': wasmPath
+      })
+      sourceMapInitialized = true
+    } else {
+      throw new Error('Could not determine path to mappings.wasm')
+    }
+  } catch (error) {
+    console.warn('Failed to initialize SourceMapConsumer WASM:', error)
+    sourceMapInitialized = false
+  }
+}
 
 /**
  * Resolves a source location that starts with "about://React/Server" by using source maps
@@ -58,6 +127,8 @@ export async function resolveSourceLocationInServer(
 
     const sourceMapContent = readFileSync(sourceMapPath, 'utf-8')
     const rawSourceMap = JSON.parse(sourceMapContent)
+    
+    ensureSourceMapInitialized()
     
     const consumer = await new Promise<SourceMapConsumer>((resolve) => {
       SourceMapConsumer.with(rawSourceMap, null, (consumer) => {
