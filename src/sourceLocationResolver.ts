@@ -40,6 +40,10 @@ export async function parseDebugStack(
   }
   
   if (!debugStack) {
+    debugStack = (fiberNode as any).debugStack || null
+  }
+  
+  if (!debugStack) {
     debugStack = fiberNode._debugSource || null
   }
 

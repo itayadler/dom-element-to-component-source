@@ -7,6 +7,7 @@ A TypeScript library for retrieving the source location of DOM elements in React
 ## Features
 
 - **🔍 Source Location Detection** - Get the source location of any DOM element in React
+- **🌳 Parent Component Chain** - Traverse up the component tree to get parent component source locations
 - **⚛️ React Framework Support** - Works with React 16+ including NextJS
 - **🗺️ Source Map Support** - Resolves original source locations using source maps
 - **🖥️ Server-Side Source Resolution** - Resolves source locations from React Server Components using source maps
@@ -41,6 +42,12 @@ const result = await getElementSourceLocation(button)
 if (result.success) {
   console.log(`Component: ${result.data.componentName}`)
   console.log(`File: ${result.data.file}:${result.data.line}:${result.data.column}`)
+  
+  // Access parent component source location
+  if (result.data.parent) {
+    console.log(`Parent: ${result.data.parent.componentName}`)
+    console.log(`Parent File: ${result.data.parent.file}:${result.data.parent.line}:${result.data.parent.column}`)
+  }
 } else {
   console.error('Error:', result.error)
 }
@@ -67,11 +74,12 @@ console.log(`Original source: ${resolved.file}:${resolved.line}:${resolved.colum
 
 ### `getElementSourceLocation(element, options?)`
 
-Retrieves the source location of a DOM element in React applications.
+Retrieves the source location of a DOM element in React applications. The returned `SourceLocation` includes a recursively populated `parent` property that allows you to traverse up the component tree.
 
 **Parameters:**
 - `element: Element` - The DOM element to analyze
 - `options?: SourceLocationOptions` - Configuration options
+  - `maxDepth?: number` - Maximum depth to traverse up the component tree (default: 10)
 
 **Returns:** `Promise<SourceLocationResult>`
 
@@ -80,7 +88,21 @@ Retrieves the source location of a DOM element in React applications.
 const result = await getElementSourceLocation(button, {
   maxDepth: 10
 })
+
+if (result.success) {
+  // Access the component's source location
+  console.log(result.data.file, result.data.line, result.data.column)
+  
+  // Traverse up the parent chain
+  let parent = result.data.parent
+  while (parent) {
+    console.log(`Parent: ${parent.componentName} at ${parent.file}:${parent.line}:${parent.column}`)
+    parent = parent.parent
+  }
+}
 ```
+
+**Note:** The library automatically detects Next.js React components and uses the appropriate traversal method (`_debugOwner` for React, `.owner` for Next.js after the first `_debugOwner`).
 
 ### `resolveSourceLocationInServer(sourceLocation)`
 
@@ -115,6 +137,7 @@ interface SourceLocation {
   line: number
   column: number
   componentName?: string
+  parent?: SourceLocation
 }
 
 interface SourceLocationOptions {

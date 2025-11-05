@@ -14,6 +14,8 @@ export interface SourceLocation {
   componentName?: string
   /** The original source code at this location (if available) */
   sourceCode?: string
+  /** The parent component's source location (if available) */
+  parent?: SourceLocation
 }
 
 /**
@@ -22,6 +24,8 @@ export interface SourceLocation {
 export interface ReactFiberNode {
   /** Debug stack information (React 16+) - Error object with stack property */
   _debugStack?: Error
+  /** Alternative debug stack field (without underscore) */
+  debugStack?: Error
   name: string
   /** Component type information */
   type?: {
@@ -35,6 +39,8 @@ export interface ReactFiberNode {
     columnNumber: number
   }
   _debugOwner?: ReactFiberNode
+  /** Owner fiber node (used in Next.js React) */
+  owner?: ReactFiberNode
   /** Parent fiber node */
   return?: ReactFiberNode
   /** Child fiber node */

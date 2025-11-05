@@ -94,7 +94,7 @@ describe('E2E React 19 - getElementSourceLocation Test', () => {
     }
   })
 
-  it('should extract source location from h2 tag in Card component in real browser', async () => {
+  it('should extract source location with parent from h2 tag in Card component', async () => {
     const browser = await chromium.launch({ headless: true })
     const context = await browser.newContext()
     const page = await context.newPage()
@@ -107,7 +107,7 @@ describe('E2E React 19 - getElementSourceLocation Test', () => {
       console.log('Waiting for card component...')
       await page.waitForSelector('[data-testid="card-component"]', { timeout: 10000 })
       
-        //@ts-ignore
+      //@ts-ignore
       await page.waitForFunction(() => typeof window.getElementSourceLocation === 'function', { timeout: 10000 })
       
       const h2Element = await page.$('h2.card-title')
@@ -122,12 +122,38 @@ describe('E2E React 19 - getElementSourceLocation Test', () => {
       })
       
       expect(result).toBeTruthy()
-
       expect(result.success).toBe(true)
+      expect(result.data).toBeDefined()
+      
+      // Verify basic source location fields (from first test)
       expect(result.data.file).toContain('Card.tsx')
       expect(result.data.line).toBe(17)
       expect(result.data.column).toBe(6)
       expect(result.data.componentName).toBe('Card')
+      
+      // Verify first parent (App.tsx) - all properties
+      const firstParent = result.data.parent
+      expect(firstParent).toBeDefined()
+      expect(firstParent).not.toBeNull()
+      expect(firstParent.file).toBeDefined()
+      expect(firstParent.file).toContain('App.tsx')
+      expect(firstParent.line).toBeGreaterThan(0)
+      expect(firstParent.column).toBeGreaterThanOrEqual(0)
+      expect(firstParent.componentName).toBe('App')
+      
+      // Verify second parent (main.tsx) - all properties
+      const secondParent = firstParent.parent
+      expect(secondParent).toBeDefined()
+      expect(secondParent).not.toBeNull()
+      expect(secondParent.file).toBeDefined()
+      expect(secondParent.file).toContain('main.tsx')
+      expect(secondParent.line).toBeGreaterThan(0)
+      expect(secondParent.column).toBeGreaterThanOrEqual(0)
+      // componentName may be undefined for main.tsx (it's the entry point)
+      
+      console.log('First parent (App):', firstParent)
+      console.log('Second parent (main):', secondParent)
+      
     } finally {
       await browser.close()
     }

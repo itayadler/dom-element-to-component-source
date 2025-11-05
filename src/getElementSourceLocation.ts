@@ -2,7 +2,8 @@ import {
   SourceLocationResult, 
   DomElementWithReactInternals, 
   ReactFiberNode,
-  SourceLocationOptions
+  SourceLocationOptions,
+  SourceLocation
 } from './types'
 import { 
   parseDebugStack,
@@ -20,7 +21,7 @@ function findFiberWithDebugStack(fiberNode: ReactFiberNode, maxDepth: number = 1
   let depth = 0
 
   while (current && depth < maxDepth) {
-    if (current._debugStack || current._debugSource) {
+    if (hasDebugStack(current)) {
       return current
     }
 
@@ -38,6 +39,66 @@ function findFiberWithDebugStack(fiberNode: ReactFiberNode, maxDepth: number = 1
     }
 
     break
+  }
+
+  return null
+}
+
+/**
+ * Checks if a fiber node has debug stack information
+ * @param fiberNode - The React Fiber node to check
+ * @returns True if the node has debug stack information
+ */
+function hasDebugStack(fiberNode: ReactFiberNode): boolean {
+  return !!(fiberNode._debugStack || (fiberNode as any).debugStack || fiberNode._debugSource)
+}
+
+/**
+ * Gets the parent source location by traversing up the component tree
+ * @param fiberNode - The starting React Fiber node
+ * @param maxDepth - Maximum depth to traverse (default: 10)
+ * @param isNextJs - Whether this is Next.js React (detected from first call)
+ * @returns The parent source location with recursively populated parent, or null if not found
+ */
+async function getParentSourceLocation(
+  fiberNode: ReactFiberNode,
+  maxDepth: number = 10,
+  isNextJs?: boolean
+): Promise<SourceLocation | null> {
+  if (maxDepth <= 0) {
+    return null
+  }
+
+  const current = fiberNode._debugOwner
+  if (!current) {
+    return null
+  }
+
+  // Detect if this is Next.js React on first call by checking if the first _debugOwner has env === "Server"
+  if (isNextJs === undefined) {
+    isNextJs = (current as any).env === "Server"
+  }
+
+  // Check if this node has debug stack information
+  if (hasDebugStack(current)) {
+    const parentLocation = await parseDebugStack(current)
+    if (parentLocation && validateSourceLocation(parentLocation)) {
+      // Recursively get the parent's parent source location
+      const grandParentLocation = await getParentSourceLocation(current, maxDepth - 1, isNextJs)
+      if (grandParentLocation) {
+        parentLocation.parent = grandParentLocation
+      }
+      return parentLocation
+    }
+  }
+
+  // For Next.js: after checking first _debugOwner, switch to using .owner
+  // For React: continue climbing _debugOwner
+  const nextNode = isNextJs ? current.owner : current._debugOwner
+  
+  if (nextNode) {
+    // Create a wrapper to continue the recursion
+    return getParentSourceLocation({ _debugOwner: nextNode } as ReactFiberNode, maxDepth - 1, isNextJs)
   }
 
   return null
@@ -147,6 +208,12 @@ export async function getElementSourceLocation(
         success: false,
         error: 'Invalid source location data found'
       }
+    }
+
+    // Get parent source location by traversing up the component tree
+    const parent = await getParentSourceLocation(fiberWithDebugStack, maxDepth)
+    if (parent) {
+      sourceLocation.parent = parent
     }
 
     return {

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0]
+
+### Added
+- `parent` property to `SourceLocation` interface - recursively populated parent component source locations
+- Support for traversing up the React component tree via `_debugOwner` and `.owner` (for Next.js)
+- Automatic detection of Next.js React components using `env === "Server"` check
+
 ## [0.2.0]
 
 ### Added
