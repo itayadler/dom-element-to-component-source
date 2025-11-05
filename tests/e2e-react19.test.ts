@@ -125,34 +125,27 @@ describe('E2E React 19 - getElementSourceLocation Test', () => {
       expect(result.success).toBe(true)
       expect(result.data).toBeDefined()
       
-      // Verify basic source location fields (from first test)
+      // Verify basic source location fields
       expect(result.data.file).toContain('Card.tsx')
       expect(result.data.line).toBe(17)
       expect(result.data.column).toBe(6)
       expect(result.data.componentName).toBe('Card')
+      expect(result.data.tagName).toBe('H2')
       
-      // Verify first parent (App.tsx) - all properties
-      const firstParent = result.data.parent
-      expect(firstParent).toBeDefined()
-      expect(firstParent).not.toBeNull()
-      expect(firstParent.file).toBeDefined()
-      expect(firstParent.file).toContain('App.tsx')
-      expect(firstParent.line).toBeGreaterThan(0)
-      expect(firstParent.column).toBeGreaterThanOrEqual(0)
-      expect(firstParent.componentName).toBe('App')
+      // First parent: div.card (Card.tsx)
+      expect(result.data.parent).toBeDefined()
+      expect(result.data.parent!.tagName).toBe('DIV')
+      expect(result.data.parent!.file).toContain('Card.tsx')
+      expect(result.data.parent!.componentName).toBe('Card')
       
-      // Verify second parent (main.tsx) - all properties
-      const secondParent = firstParent.parent
-      expect(secondParent).toBeDefined()
-      expect(secondParent).not.toBeNull()
-      expect(secondParent.file).toBeDefined()
-      expect(secondParent.file).toContain('main.tsx')
-      expect(secondParent.line).toBeGreaterThan(0)
-      expect(secondParent.column).toBeGreaterThanOrEqual(0)
-      // componentName may be undefined for main.tsx (it's the entry point)
+      // Second parent: div.test-app (App.tsx)
+      expect(result.data.parent!.parent).toBeDefined()
+      expect(result.data.parent!.parent!.tagName).toBe('DIV')
+      expect(result.data.parent!.parent!.file).toContain('App.tsx')
+      expect(result.data.parent!.parent!.componentName).toBe('App')
       
-      console.log('First parent (App):', firstParent)
-      console.log('Second parent (main):', secondParent)
+      // No third parent
+      expect(result.data.parent!.parent!.parent).toBeUndefined()
       
     } finally {
       await browser.close()

@@ -12,9 +12,11 @@ export interface SourceLocation {
   column: number
   /** The name of the React component (if available) */
   componentName?: string
+  /** The HTML tag name of the element (e.g., 'DIV', 'H2', 'BUTTON') */
+  tagName?: string
   /** The original source code at this location (if available) */
   sourceCode?: string
-  /** The parent component's source location (if available) */
+  /** The immediate parent DOM element's source location */
   parent?: SourceLocation
 }
 

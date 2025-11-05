@@ -125,43 +125,39 @@ describe('E2E Next.js Turbopack - getElementSourceLocation Test', () => {
       expect(result.success).toBe(true)
       expect(result.data).toBeDefined()
       
-      // Verify basic source location fields (from first test)
+      // Verify basic source location fields
       expect(result.data.file).toContain('Card.tsx')
       expect(result.data.line).toBe(19)
       expect(result.data.column).toBe(7)
       expect(result.data.componentName).toBe('Card')
+      expect(result.data.tagName).toBe('H2')
       
-      // Verify first parent (App.tsx) - all properties
-      const firstParent = result.data.parent
-      expect(firstParent).toBeDefined()
-      expect(firstParent).not.toBeNull()
-      expect(firstParent.file).toBeDefined()
-      expect(firstParent.file).toContain('App.tsx')
-      expect(firstParent.line).toBeGreaterThan(0)
-      expect(firstParent.column).toBeGreaterThanOrEqual(0)
-      expect(firstParent.componentName).toBe('App')
+      // First parent: div.card (Card.tsx)
+      expect(result.data.parent).toBeDefined()
+      expect(result.data.parent!.tagName).toBe('DIV')
+      expect(result.data.parent!.file).toContain('Card.tsx')
+      expect(result.data.parent!.componentName).toBe('Card')
       
-      // Verify second parent (page.tsx) - all properties
-      const secondParent = firstParent.parent
-      expect(secondParent).toBeDefined()
-      expect(secondParent).not.toBeNull()
-      expect(secondParent.file).toBeDefined()
-      expect(secondParent.file).toContain('page.tsx')
-      expect(secondParent.line).toBeGreaterThan(0)
-      expect(secondParent.column).toBeGreaterThanOrEqual(0)
-      expect(secondParent.componentName).toBe('Home')
+      // Second parent: div.test-app (App.tsx)
+      expect(result.data.parent!.parent).toBeDefined()
+      expect(result.data.parent!.parent!.tagName).toBe('DIV')
+      expect(result.data.parent!.parent!.file).toContain('App.tsx')
+      expect(result.data.parent!.parent!.componentName).toBe('App')
       
-      // Verify third parent exists (if present) - all properties
-      if (secondParent.parent) {
-        const thirdParent = secondParent.parent
-        expect(thirdParent).toBeDefined()
-        expect(thirdParent.file).toBeDefined()
-        expect(thirdParent.line).toBeGreaterThan(0)
-        expect(thirdParent.column).toBeGreaterThanOrEqual(0)
-      }
+      // Third parent: body (RootLayout)
+      expect(result.data.parent!.parent!.parent).toBeDefined()
+      expect(result.data.parent!.parent!.parent!.tagName).toBe('BODY')
+      expect(result.data.parent!.parent!.parent!.componentName).toBe('RootLayout')
+      expect(result.data.parent!.parent!.parent!.file).toBeDefined()
       
-      console.log('First parent (App):', firstParent)
-      console.log('Second parent (page):', secondParent)
+      // Fourth parent: html (RootLayout)
+      expect(result.data.parent!.parent!.parent!.parent).toBeDefined()
+      expect(result.data.parent!.parent!.parent!.parent!.tagName).toBe('HTML')
+      expect(result.data.parent!.parent!.parent!.parent!.componentName).toBe('RootLayout')
+      expect(result.data.parent!.parent!.parent!.parent!.file).toBeDefined()
+      
+      // No fifth parent
+      expect(result.data.parent!.parent!.parent!.parent!.parent).toBeUndefined()
       
     } finally {
       await browser.close()
