@@ -1,6 +1,10 @@
 # Changelog
 
-## [0.3.0]
+## [0.3.2]
+
+### Changed
+- default export is for the browser so it won't include the `resolveSourceLocationInServer`
+- `dom-element-to-component-source/server` includes `resolveSourceLocationInServer`
 
 ### Added
 - `parent` property to `SourceLocation` interface - recursively populated parent component source locations

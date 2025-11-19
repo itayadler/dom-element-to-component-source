@@ -3,11 +3,15 @@
   "version": "0.3.1",
   "description": "A library to retrieve the source location of DOM elements in React applications",
   "module": "./dist/dom-element-to-component-source.es.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/browser.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/browser.d.ts",
       "import": "./dist/dom-element-to-component-source.es.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.es.js"
     }
   },
   "files": [

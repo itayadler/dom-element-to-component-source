@@ -6,10 +6,12 @@ export default defineConfig({
   plugins: [react()],
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: {
+        index: resolve(__dirname, 'src/browser.ts'),
+        server: resolve(__dirname, 'src/server.ts'),
+      },
       name: 'DomElementToComponentSource',
-      fileName: (format) => `dom-element-to-component-source.${format}.js`,
-      formats: ['es', 'cjs', 'umd']
+      formats: ['es']
     },
     rollupOptions: {
       external: (id) => {
@@ -19,7 +21,12 @@ export default defineConfig({
       output: [
         {
           format: 'es',
-          entryFileNames: 'dom-element-to-component-source.es.js',
+          entryFileNames: (chunkInfo) => {
+            if (chunkInfo.name === 'index') {
+              return 'dom-element-to-component-source.es.js'
+            }
+            return 'server.es.js'
+          },
           globals: {}
         },
       ]

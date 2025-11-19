@@ -76,7 +76,7 @@ describe('E2E React 19 - getElementSourceLocation Test', () => {
 
     await waitForServer(SERVER_URL, 30000)
     console.log('✅ React 19 dev server is ready!')
-  })
+  }, 20000)
 
   afterAll(async () => {
     if (devServer) {
