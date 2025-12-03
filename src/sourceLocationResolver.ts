@@ -3,6 +3,25 @@ import ErrorStackParser from 'error-stack-parser'
 import StackTraceGPS from 'stacktrace-gps'
 
 function getComponentName(fiberNode: ReactFiberNode): string | null {
+  // First check if the fiber node itself has a component name
+  // This is important for ForwardRef components which have displayName set
+  const nodeType = (fiberNode as any).type
+  if (nodeType) {
+    // Check displayName first (set via Component.displayName = 'Name')
+    if (nodeType.displayName) {
+      return nodeType.displayName
+    }
+    // For ForwardRef, check the render function name
+    if (nodeType.render?.name) {
+      return nodeType.render.name
+    }
+    // Regular component name
+    if (nodeType.name) {
+      return nodeType.name
+    }
+  }
+
+  // Fall back to climbing the _debugOwner chain
   let current = fiberNode._debugOwner
   let previous: ReactFiberNode | null = null
   
@@ -11,8 +30,15 @@ function getComponentName(fiberNode: ReactFiberNode): string | null {
       break
     }
     
-    // Skip ForwardRef nodes (tag 11) and continue climbing up the debugOwner chain
+    // For ForwardRef nodes (tag 11), check displayName first
     if ((current as any).tag === 11) {
+      const type = (current as any).type
+      if (type?.displayName) {
+        return type.displayName
+      }
+      if (type?.render?.name) {
+        return type.render.name
+      }
       previous = current
       current = current._debugOwner
       continue
@@ -41,22 +67,9 @@ export async function parseDebugStack(
   fiberNode: ReactFiberNode, 
 ): Promise<SourceLocation | null> {
   // If this is a ForwardRef node (tag 11), skip it and use its _debugOwner instead
-  // Also check if _debugOwner is a ForwardRef and continue climbing
   let nodeToCheck = fiberNode
-  while ((nodeToCheck as any).tag === 11 && nodeToCheck._debugOwner) {
-    nodeToCheck = nodeToCheck._debugOwner
-  }
-
-  // Check if the node's _debugOwner is a ForwardRef and use its debug stack instead
-  // This ensures we get the source location of the actual component, not the ForwardRef wrapper
-  if (nodeToCheck._debugOwner && (nodeToCheck._debugOwner as any).tag === 11) {
-    let ownerToCheck = nodeToCheck._debugOwner
-    // Skip ForwardRef nodes in the _debugOwner chain
-    while ((ownerToCheck as any).tag === 11 && ownerToCheck._debugOwner) {
-      ownerToCheck = ownerToCheck._debugOwner
-    }
-    // Prefer the owner's debug stack for source extraction
-    nodeToCheck = ownerToCheck
+  if ((fiberNode as any).tag === 11 && fiberNode._debugOwner) {
+    nodeToCheck = fiberNode._debugOwner
   }
 
   let debugStack: Error | { fileName: string; lineNumber: number; columnNumber: number } | null = null

@@ -151,4 +151,50 @@ describe('E2E React 19 - getElementSourceLocation Test', () => {
       await browser.close()
     }
   })
+
+  it('should extract source location from forwardRef button pointing to Button.tsx', async () => {
+    const browser = await chromium.launch({ headless: true })
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    try {
+      console.log('Navigating to React 19 app...')
+      await page.goto(SERVER_URL)
+      
+      console.log('Waiting for forwardRef button...')
+      await page.waitForSelector('[data-testid="increment-button"]', { timeout: 10000 })
+      
+      //@ts-ignore
+      await page.waitForFunction(() => typeof window.getElementSourceLocation === 'function', { timeout: 10000 })
+      
+      const buttonElement = await page.$('[data-testid="increment-button"]')
+      expect(buttonElement).toBeTruthy()
+      
+      const result = await page.evaluate(() => {
+        const button = document.querySelector('[data-testid="increment-button"]')
+        if (!button) return null
+        
+        //@ts-ignore
+        return window.getElementSourceLocation(button)
+      })
+      
+      expect(result).toBeTruthy()
+      expect(result.success).toBe(true)
+      expect(result.data).toBeDefined()
+      
+      // The button element source should be in Button.tsx where the actual <button> is rendered,
+      // NOT in App.tsx where the <Button> component is used
+      expect(result.data.file).toContain('Button.tsx')
+      expect(result.data.line).toBe(10) // Line where <button> is in Button.tsx
+      expect(result.data.componentName).toBe('Button')
+      expect(result.data.tagName).toBe('BUTTON')
+      
+      // Parent should be the card-content div in Card.tsx
+      expect(result.data.parent).toBeDefined()
+      expect(result.data.parent!.file).toContain('Card.tsx')
+      
+    } finally {
+      await browser.close()
+    }
+  })
 })

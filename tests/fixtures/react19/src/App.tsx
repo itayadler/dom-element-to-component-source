@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Card } from './Card'
+import { Button } from './Button'
 
 export function App() {
   const [count, setCount] = useState(0)
@@ -9,7 +10,7 @@ export function App() {
       <h1>React 19 E2E Test</h1>
       <Card title="Counter Card">
         <p>Count: {count}</p>
-        <button 
+        <Button 
           onClick={(e) => {
             e.stopPropagation()
             setCount(c => c + 1)
@@ -17,8 +18,9 @@ export function App() {
           data-testid="increment-button"
         >
           Increment
-        </button>
-        <button 
+        </Button>
+        <Button 
+          variant="secondary"
           onClick={(e) => {
             e.stopPropagation()
             setCount(0)
@@ -26,7 +28,7 @@ export function App() {
           data-testid="reset-button"
         >
           Reset
-        </button>
+        </Button>
       </Card>
     </div>
   )

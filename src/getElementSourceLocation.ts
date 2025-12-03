@@ -28,6 +28,7 @@ function findFiberWithDebugStack(fiberNode: ReactFiberNode, maxDepth: number = 1
         if (ownerWithDebugStack) {
           return ownerWithDebugStack
         }
+
       }
       return current
     }
@@ -263,3 +264,4 @@ export async function getElementSourceLocation(
     }
   }
 }
+
