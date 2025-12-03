@@ -41,9 +41,22 @@ export async function parseDebugStack(
   fiberNode: ReactFiberNode, 
 ): Promise<SourceLocation | null> {
   // If this is a ForwardRef node (tag 11), skip it and use its _debugOwner instead
+  // Also check if _debugOwner is a ForwardRef and continue climbing
   let nodeToCheck = fiberNode
-  if ((fiberNode as any).tag === 11 && fiberNode._debugOwner) {
-    nodeToCheck = fiberNode._debugOwner
+  while ((nodeToCheck as any).tag === 11 && nodeToCheck._debugOwner) {
+    nodeToCheck = nodeToCheck._debugOwner
+  }
+
+  // Check if the node's _debugOwner is a ForwardRef and use its debug stack instead
+  // This ensures we get the source location of the actual component, not the ForwardRef wrapper
+  if (nodeToCheck._debugOwner && (nodeToCheck._debugOwner as any).tag === 11) {
+    let ownerToCheck = nodeToCheck._debugOwner
+    // Skip ForwardRef nodes in the _debugOwner chain
+    while ((ownerToCheck as any).tag === 11 && ownerToCheck._debugOwner) {
+      ownerToCheck = ownerToCheck._debugOwner
+    }
+    // Prefer the owner's debug stack for source extraction
+    nodeToCheck = ownerToCheck
   }
 
   let debugStack: Error | { fileName: string; lineNumber: number; columnNumber: number } | null = null
