@@ -11,6 +11,13 @@ function getComponentName(fiberNode: ReactFiberNode): string | null {
       break
     }
     
+    // Skip ForwardRef nodes (tag 11) and continue climbing up the debugOwner chain
+    if ((current as any).tag === 11) {
+      previous = current
+      current = current._debugOwner
+      continue
+    }
+    
     const name = current.name || current.type?.name
     
     if (name) {
@@ -33,25 +40,31 @@ function getComponentName(fiberNode: ReactFiberNode): string | null {
 export async function parseDebugStack(
   fiberNode: ReactFiberNode, 
 ): Promise<SourceLocation | null> {
+  // If this is a ForwardRef node (tag 11), skip it and use its _debugOwner instead
+  let nodeToCheck = fiberNode
+  if ((fiberNode as any).tag === 11 && fiberNode._debugOwner) {
+    nodeToCheck = fiberNode._debugOwner
+  }
+
   let debugStack: Error | { fileName: string; lineNumber: number; columnNumber: number } | null = null
 
   if (!debugStack) {
-    debugStack = fiberNode._debugStack || null
+    debugStack = nodeToCheck._debugStack || null
   }
   
   if (!debugStack) {
-    debugStack = (fiberNode as any).debugStack || null
+    debugStack = (nodeToCheck as any).debugStack || null
   }
   
   if (!debugStack) {
-    debugStack = fiberNode._debugSource || null
+    debugStack = nodeToCheck._debugSource || null
   }
 
   if (!debugStack) {
     return null
   }
 
-  let componentName: string | undefined = getComponentName(fiberNode) || undefined
+  let componentName: string | undefined = getComponentName(nodeToCheck) || undefined
 
   let sourceLocation: SourceLocation
 

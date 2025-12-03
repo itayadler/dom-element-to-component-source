@@ -22,6 +22,13 @@ function findFiberWithDebugStack(fiberNode: ReactFiberNode, maxDepth: number = 1
 
   while (current && depth < maxDepth) {
     if (hasDebugStack(current)) {
+      // If this is a ForwardRef node (tag 11), check its _debugOwner instead
+      if ((current as any).tag === 11 && current._debugOwner) {
+        const ownerWithDebugStack = findFiberWithDebugStack(current._debugOwner, maxDepth - depth)
+        if (ownerWithDebugStack) {
+          return ownerWithDebugStack
+        }
+      }
       return current
     }
 

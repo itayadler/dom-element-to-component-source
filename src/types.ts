@@ -24,6 +24,8 @@ export interface SourceLocation {
  * Represents a React Fiber node with debug stack information
  */
 export interface ReactFiberNode {
+  /** React Fiber node tag (0 = FunctionComponent, 5 = HostComponent, 11 = ForwardRef, etc.) */
+  tag?: number
   /** Debug stack information (React 16+) - Error object with stack property */
   _debugStack?: Error
   /** Alternative debug stack field (without underscore) */
