@@ -1,6 +1,6 @@
 {
   "name": "dom-element-to-component-source",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "A library to retrieve the source location of DOM elements in React applications",
   "module": "./dist/dom-element-to-component-source.es.js",
   "types": "./dist/browser.d.ts",
