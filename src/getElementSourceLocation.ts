@@ -17,36 +17,30 @@ import {
  * @returns The first React Fiber node with debug stack information, or null if not found
  */
 function findFiberWithDebugStack(fiberNode: ReactFiberNode, maxDepth: number = 10): ReactFiberNode | null {
-  let current = fiberNode
+  let current: ReactFiberNode | null = fiberNode
   let depth = 0
 
   while (current && depth < maxDepth) {
-    if (hasDebugStack(current)) {
-      // If this is a ForwardRef node (tag 11), check its _debugOwner instead
-      if ((current as any).tag === 11 && current._debugOwner) {
-        const ownerWithDebugStack = findFiberWithDebugStack(current._debugOwner, maxDepth - depth)
-        if (ownerWithDebugStack) {
-          return ownerWithDebugStack
-        }
+    // Check _debugOwner chain first
+    if (current._debugOwner && hasDebugStack(current._debugOwner)) {
+      return current._debugOwner
+    }
 
-      }
+    // Check current node
+    if (hasDebugStack(current)) {
       return current
     }
 
+    // Traverse up via return (parent) or sibling
     if (current.return) {
       current = current.return
       depth++
-      continue
+    } else if (current.sibling) {
+      current = current.sibling
+      depth++
+    } else {
+      break
     }
-
-    if (current.sibling) {
-      const siblingResult = findFiberWithDebugStack(current.sibling, maxDepth - depth)
-      if (siblingResult) {
-        return siblingResult
-      }
-    }
-
-    break
   }
 
   return null

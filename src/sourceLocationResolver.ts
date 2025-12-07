@@ -4,7 +4,6 @@ import StackTraceGPS from 'stacktrace-gps'
 
 function getComponentName(fiberNode: ReactFiberNode): string | null {
   // First check if the fiber node itself has a component name
-  // This is important for ForwardRef components which have displayName set
   const nodeType = (fiberNode as any).type
   if (nodeType) {
     // Check displayName first (set via Component.displayName = 'Name')
@@ -30,20 +29,6 @@ function getComponentName(fiberNode: ReactFiberNode): string | null {
       break
     }
     
-    // For ForwardRef nodes (tag 11), check displayName first
-    if ((current as any).tag === 11) {
-      const type = (current as any).type
-      if (type?.displayName) {
-        return type.displayName
-      }
-      if (type?.render?.name) {
-        return type.render.name
-      }
-      previous = current
-      current = current._debugOwner
-      continue
-    }
-    
     const name = current.name || current.type?.name
     
     if (name) {
@@ -58,6 +43,69 @@ function getComponentName(fiberNode: ReactFiberNode): string | null {
 }
 
 /**
+ * Extracts file path from a stack trace frame
+ */
+async function extractFilePathFromStack(debugStack: Error | { fileName: string; lineNumber: number; columnNumber: number }): Promise<string | null> {
+  if (debugStack && 'fileName' in debugStack) {
+    return debugStack.fileName || null
+  }
+  
+  if (debugStack && 'stack' in debugStack && typeof debugStack.stack === 'string') {
+    try {
+      const stackFrames = ErrorStackParser.parse(debugStack as Error)
+      if (stackFrames.length >= 2) {
+        const targetFrame = stackFrames[1]
+        const gps = new StackTraceGPS()
+        const originalFrame = await gps.getMappedLocation(targetFrame)
+        const fileName = originalFrame.fileName || targetFrame.fileName || ''
+        return fileName.split('?')[0]
+      }
+    } catch {
+      try {
+        const stackFrames = ErrorStackParser.parse(debugStack as Error)
+        if (stackFrames.length >= 2) {
+          const targetFrame = stackFrames[1]
+          const fileName = targetFrame.fileName || ''
+          return fileName.split('?')[0]
+        }
+      } catch {
+        // Ignore parsing errors
+      }
+    }
+  }
+  
+  return null
+}
+
+/**
+ * Finds a fiber node whose stack trace doesn't include node_modules
+ * Traverses up _debugOwner chain until finding one without node_modules
+ */
+async function findNodeWithoutNodeModules(fiberNode: ReactFiberNode): Promise<ReactFiberNode> {
+  let current: ReactFiberNode | null = fiberNode
+  
+  while (current) {
+    const debugStack = current._debugStack || (current as any).debugStack || current._debugSource
+    if (debugStack) {
+      const filePath = await extractFilePathFromStack(debugStack)
+      if (filePath && !filePath.includes('node_modules')) {
+        return current
+      }
+    }
+    
+    // Move up the chain
+    if (current._debugOwner) {
+      current = current._debugOwner
+    } else {
+      break
+    }
+  }
+  
+  // If we didn't find one without node_modules, return the original
+  return fiberNode
+}
+
+/**
  * Parses debug stack data from different React versions and formats
  * @param fiberNode - The React Fiber node
  * @param reactVersion - The detected React version
@@ -66,11 +114,8 @@ function getComponentName(fiberNode: ReactFiberNode): string | null {
 export async function parseDebugStack(
   fiberNode: ReactFiberNode, 
 ): Promise<SourceLocation | null> {
-  // If this is a ForwardRef node (tag 11), skip it and use its _debugOwner instead
-  let nodeToCheck = fiberNode
-  if ((fiberNode as any).tag === 11 && fiberNode._debugOwner) {
-    nodeToCheck = fiberNode._debugOwner
-  }
+  // If the stack trace includes node_modules, find a node without it
+  const nodeToCheck = await findNodeWithoutNodeModules(fiberNode)
 
   let debugStack: Error | { fileName: string; lineNumber: number; columnNumber: number } | null = null
 
