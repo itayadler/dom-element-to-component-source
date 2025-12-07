@@ -37,82 +37,33 @@ async function extractFilePathFromStack(debugStack: Error | { fileName: string; 
   return null
 }
 
-/**
- * Checks if a fiber node's stack trace includes node_modules
- */
-async function isNodeModulesNode(fiberNode: ReactFiberNode): Promise<boolean> {
-  const debugStack = fiberNode._debugStack || (fiberNode as any).debugStack || fiberNode._debugSource
-  if (debugStack) {
-    const filePath = await extractFilePathFromStack(debugStack)
-    if (filePath && filePath.includes('node_modules')) {
-      return true
-    }
-  }
-  return false
-}
+const FORWARD_REF_TAG = 11
 
 /**
- * Extracts the component name from a fiber node's type
+ * Skips ForwardRef nodes (tag 11) by following _debugOwner
  */
-function getNameFromFiber(fiberNode: ReactFiberNode): string | null {
-  const nodeType = (fiberNode as any).type
-  if (nodeType) {
-    // Check displayName first (set via Component.displayName = 'Name')
-    if (nodeType.displayName) {
-      return nodeType.displayName
-    }
-    // For ForwardRef, check the render function name
-    if (nodeType.render?.name) {
-      return nodeType.render.name
-    }
-    // Regular component name
-    if (nodeType.name) {
-      return nodeType.name
-    }
-  }
-  
-  // Check fiber.name as fallback
-  if ((fiberNode as any).name) {
-    return (fiberNode as any).name
-  }
-  
-  return null
-}
-
-async function getComponentName(fiberNode: ReactFiberNode): Promise<string | null> {
-  // First check if the fiber node itself has a component name (and is not from node_modules)
-  if (!(await isNodeModulesNode(fiberNode))) {
-    const name = getNameFromFiber(fiberNode)
-    if (name) {
-      return name
-    }
-  }
-
-  // Fall back to climbing the _debugOwner chain, skipping node_modules
-  let current = fiberNode._debugOwner
-  let previous: ReactFiberNode | null = null
-  
-  while (current) {
-    if (current === previous) {
-      break
-    }
-    
-    // Skip nodes from node_modules
-    if (await isNodeModulesNode(current)) {
-      previous = current
-      current = current._debugOwner
-      continue
-    }
-    
-    const name = getNameFromFiber(current)
-    
-    if (name) {
-      return name
-    }
-    
-    previous = current
+function skipForwardRefs(fiber: ReactFiberNode): ReactFiberNode {
+  let current = fiber
+  while ((current as any).tag === FORWARD_REF_TAG && current._debugOwner) {
     current = current._debugOwner
   }
+  return current
+}
+
+/**
+ * Gets the component name from a fiber node, skipping ForwardRef nodes
+ */
+function getComponentName(fiberNode: ReactFiberNode): string | null {
+  const node = skipForwardRefs(fiberNode)
+  
+  const nodeType = (node as any).type
+  if (nodeType) {
+    if (nodeType.displayName) return nodeType.displayName
+    if (nodeType.render?.name) return nodeType.render.name
+    if (nodeType.name) return nodeType.name
+  }
+  
+  if ((node as any).name) return (node as any).name
   
   return null
 }
@@ -175,7 +126,7 @@ export async function parseDebugStack(
     return null
   }
 
-  let componentName: string | undefined = (await getComponentName(nodeToCheck)) || undefined
+  let componentName: string | undefined = getComponentName(nodeToCheck) || undefined
 
   let sourceLocation: SourceLocation
 

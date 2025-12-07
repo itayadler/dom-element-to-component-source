@@ -167,7 +167,7 @@ describe('E2E React 19 - getElementSourceLocation Test', () => {
       
       // The button element source points to App.tsx where the component tree is rendered
       expect(result.data.file).toContain('App.tsx')
-      expect(result.data.componentName).toBe('Button')
+      expect(result.data.componentName).toBe('App')
       expect(result.data.tagName).toBe('BUTTON')
       
     } finally {
